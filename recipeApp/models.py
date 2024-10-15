@@ -22,9 +22,8 @@ class Recipe(models.Model):
         HARD = 3, 'Hard'
     
     
-    author = models.ForeignKey(User, related_name="recipe_creator", on_delete=models.CASCADE)
+    author = models.ForeignKey(User, related_name="recipes", on_delete=models.CASCADE)
     title = models.CharField(max_length = 255)
-    image = models.ImageField(upload_to = 'recipes_image/')
     servings = models.PositiveIntegerField()
     prepration_time = models.DurationField(help_text="Preparation time (hh:mm:ss)")
     total_time = models.DurationField(help_text="Total time (hh:mm:ss)")
@@ -45,6 +44,17 @@ class Recipe(models.Model):
     
     def __str__(self):
         return self.title
+    
+    
+class RecipeImage(models.Model):
+    
+    recipe = models.ForeignKey(Recipe, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='recipe_images/')
+    uploaded_at = models.DateTimeField(auto_now_add = True)
+    description = models.CharField(max_length=255, blank=True, null=True)
+    
+    def __str__(self):
+        return f"Image for {self.recipe.title}"
     
     
 class RecipeIngredient(models.Model):
@@ -71,7 +81,7 @@ class RecipeIngredient(models.Model):
 class RecipeCollection(models.Model):
     
     title = models.CharField(max_length=255)
-    user = models.ForeignKey(User, related_name='collection_creator', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='recipe_collections', on_delete=models.CASCADE)
     recipes = models.ManyToManyField(Recipe, related_name='collections')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

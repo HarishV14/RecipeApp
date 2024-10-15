@@ -1,7 +1,11 @@
 from django.contrib import admin
-from .models import Recipe, RecipeIngredient, RecipeCollection
+from .models import Recipe, RecipeIngredient, RecipeCollection, RecipeImage
 
-
+class RecipeImageInline(admin.TabularInline):
+    model = RecipeImage
+    extra = 1 
+    
+    
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
     extra = 2
@@ -13,7 +17,7 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('cuisine', 'food_type', 'difficulty', 'featured')
     search_fields = ('title', 'instructions')
     ordering = ('-created_at',)
-    inlines = [RecipeIngredientInline]
+    inlines = [RecipeIngredientInline, RecipeImageInline]
 
 
 @admin.register(RecipeCollection)
