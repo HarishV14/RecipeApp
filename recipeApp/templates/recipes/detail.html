@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% load duration_tags %}
+
+{% block title %}{{ recipe.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-12 px-6">
+
+    <div class="text-center mb-10">
+        <h1 class="text-5xl font-bold text-gray-900">{{ recipe.title }}</h1>
+        <p class="text-gray-600 mt-2">By <span class="font-medium">{{ recipe.author.username }}</span></p>
+        <div class="flex flex-wrap justify-center gap-4 mt-4 text-gray-500 text-sm">
+            <span><strong>Cuisine:</strong> {{ recipe.get_cuisine_display }}</span>
+            <span><strong>Difficulty:</strong> {{ recipe.get_difficulty_display }}</span>
+            <span><strong>Servings:</strong> {{ recipe.servings }}</span>
+            <span><strong>Calories:</strong> {{ recipe.calories }} kcal</span>
+            <span><strong>Preparation Time:</strong> {{ recipe.prepration_time|duration }}</span>
+            <span><strong>Total Time:</strong> {{ recipe.total_time|duration }}</span>
+        </div>
+    </div>
+
+    {% if recipe.featured %}
+    <div class="flex justify-center mb-4">
+        <div class="bg-yellow-300 text-gray-900 text-sm font-semibold rounded-full px-4 py-1">
+            Featured Recipe
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="mt-10">
+        <h2 class="text-3xl font-semibold text-gray-800 mb-4 text-center">Recipe Images</h2>
+    
+        {% if recipe.images.count == 1 %}
+        <div class="flex justify-center">
+            <div class="flex-shrink-0 w-64 rounded-lg shadow-lg overflow-hidden"> <!-- Fixed width for single image -->
+                <img src="{{ recipe.images.first.image.url }}" alt="{{ recipe.images.first.description }}"
+                    class="w-full h-64 object-cover transition-transform duration-300 transform hover:scale-105">
+                {% if recipe.images.first.description %}
+                <div class="bg-gray-100 p-3 text-center text-sm text-gray-500">{{ recipe.images.first.description }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="flex overflow-x-auto gap-6 pb-4 justify-start scrollbar-hide">
+            {% for image in recipe.images.all %}
+            <div class="flex-shrink-0 w-64 rounded-lg shadow-lg overflow-hidden">
+                <img src="{{ image.image.url }}" alt="{{ image.description }}"
+                    class="w-full h-64 object-cover transition-transform duration-300 transform hover:scale-105">
+                {% if image.description %}
+                <div class="bg-gray-100 p-3 text-center text-sm text-gray-500">{{ image.description }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="mt-10">
+        <h2 class="text-3xl font-semibold text-gray-800 mb-4">Ingredients</h2>
+        <div class="bg-gray-50 p-4 rounded-lg shadow-md">
+            <ul class="list-disc list-inside space-y-2">
+                {% for ingredient in recipe.ingredients.all %}
+                <li class="text-gray-700 text-lg flex">
+                    <span class="font-semibold pr-2">{{ ingredient.quantity }} {{ ingredient.get_unit_display }}</span>
+                    <span>of {{ ingredient.name }}</span>
+                    {% if ingredient.optional %}
+                    <span class="text-gray-500">(Optional)</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="mt-10">
+        <h2 class="text-3xl font-semibold text-gray-800 mb-4">Instructions</h2>
+        <div class="bg-gray-100 p-4 rounded-lg shadow-md text-gray-700">
+            <ol class="list-decimal list-inside space-y-2">
+                {% for instruction in recipe.instructions.splitlines %}
+                <li>{{ instruction }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

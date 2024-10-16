@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to Recipe App{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-14">
+    <header class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-800">Welcome to the Recipe App</h1>
+        <p class="mt-4 text-lg text-gray-600">Your go-to place for discovering and sharing delicious recipes!</p>
+    </header>
+
+    <section class="bg-blue-50 p-6 rounded-lg shadow mb-6">
+        <h2 class="text-2xl font-semibold mb-4 text-blue-600">Explore Recipes</h2>
+        <p class="mb-4 text-gray-700">Discover a variety of recipes ranging from vegetarian to non-vegetarian, vegan
+            options, and much more.
+            You can also create your own recipes and share them with others!</p>
+        <a href="{% url 'recipe_list'%}"
+            class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-300">Explore</a>
+    </section>
+</div>
+{% endblock %}
