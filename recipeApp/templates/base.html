@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Recipe App{% endblock %}</title>
+    <link href="{% static 'base.css' %}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="{% url 'home' %}"
+                class="text-lg font-semibold text-gray-800 hover:text-blue-600 transition duration-300">Recipe App</a>
+            <div>
+                <ul class="flex space-x-6">
+                    <li><a href="{% url 'recipe_list' %}"
+                            class="text-gray-700 hover:text-blue-500 transition duration-300">Recipes</a></li>
+                    <li><a href="{% url  'collection_list' %}"
+                            class="text-gray-700 hover:text-blue-500 transition duration-300">Collections</a></li>
+                    {% if user.is_authenticated %}
+                    <li><a href="#"
+                            class="text-gray-700 hover:text-blue-500 transition duration-300">Logout</a></li>
+                    {% else %}
+                    <li><a href="#"
+                            class="text-gray-700 hover:text-blue-500 transition duration-300">Login</a></li>
+                    <li><a href="#"
+                            class="text-gray-700 hover:text-blue-500 transition duration-300">Signup</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto ">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+
+</html>

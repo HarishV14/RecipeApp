@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ collection.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+    <h1 class="text-4xl font-bold mb-4 text-center text-gray-800">{{ collection.title }}</h1>
+    <p class="text-gray-600 text-center">Created by: <strong>{{ collection.user.username }}</strong></p>
+    <p class="text-gray-600 text-center">Number of Recipes: <strong>{{ collection.recipe_count }}</strong></p>
+
+    <h2 class="text-3xl font-semibold mt-8 text-gray-800 text-center">Recipes</h2>
+    <div class="flex justify-center mt-4 space-x-4 ">
+        {% for recipe in collection.recipes.all %}
+        <div class="bg-gray-100 rounded-lg overflow-hidden shadow ">
+            <a href="{% url 'recipe_detail' recipe.pk %}" class="block">
+                {% if recipe.images.first %}
+                <img src="{{ recipe.images.first.image.url }}" alt="{{ recipe.title }}" class="h-32 w-32 object-cover">
+                {% else %}
+                <div class="h-32 w-32 bg-gray-300 flex items-center justify-center text-gray-500">No Image</div>
+                {% endif %}
+                <div class="p-2 text-center">
+                    <h3 class="text-sm font-semibold text-gray-800 pb-2">{{ recipe.title }}</h3>
+                    <a href="{% url 'recipe_detail' recipe.pk %}" class="bg-blue-500 text-white px-1 py-1 rounded text-xs hover:bg-blue-600 transition duration-200">
+                        View
+                    </a>
+                </div>
+            </a>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-gray-600 text-center">
+            No recipes in this collection.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

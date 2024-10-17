@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from .models import Recipe, RecipeIngredient, RecipeCollection, RecipeImage
 from datetime import timedelta
+from django.urls import reverse
 
 
 class RecipeModelTest(TestCase):
@@ -146,3 +147,139 @@ class RecipeCollectionModelTest(TestCase):
         """Test the string representation of the collection."""
         self.assertEqual(str(self.collection), 'My Recipe Collection (1 recipes)')
 
+
+# view testing
+
+class HomePageViewTests(TestCase):
+    def test_home_page_status_code(self):
+        response = self.client.get(reverse('home'))  
+        self.assertEqual(response.status_code, 200)
+
+    def test_home_page_template(self):
+        response = self.client.get(reverse('home'))
+        self.assertTemplateUsed(response, 'home.html')
+
+
+class RecipeListViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.recipes = [
+            Recipe.objects.create(
+                author=self.user,
+                title='Recipe 1',
+                servings=4,
+                prepration_time=timedelta(minutes=30),
+                total_time=timedelta(minutes=40),
+                calories=300,
+                instructions='Instructions for Recipe 1.',
+                featured=False,
+                cuisine=Recipe.CuisineType.NORTH_INDIAN,
+                food_type=Recipe.FoodType.VEGETARIAN,
+                difficulty=Recipe.DifficultyLevel.EASY
+            ),
+            Recipe.objects.create(
+                author=self.user,
+                title='Recipe 2',
+                servings=2,
+                prepration_time=timedelta(minutes=30),
+                total_time=timedelta(minutes=40),
+                calories=200,
+                instructions='Instructions for Recipe 2.',
+                featured=True,
+                cuisine=Recipe.CuisineType.SOUTH_INDIAN,
+                food_type=Recipe.FoodType.VEGAN,
+                difficulty=Recipe.DifficultyLevel.MEDIUM
+            )
+        ]
+
+    def test_recipe_list_view_status_code(self):
+        response = self.client.get(reverse('recipe_list'))  
+        self.assertEqual(response.status_code, 200)
+
+    def test_recipe_list_view_template(self):
+        response = self.client.get(reverse('recipe_list'))
+        self.assertTemplateUsed(response, 'recipes/list.html')
+
+    def test_recipe_list_view_context(self):
+        response = self.client.get(reverse('recipe_list'))
+        self.assertIn('recipes', response.context)
+        self.assertEqual(len(response.context['recipes']), 1)  
+
+
+class RecipeCollectionListViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.collection = RecipeCollection.objects.create(
+            title='Collection 1',
+            user=self.user
+        )
+
+    def test_collection_list_view_status_code(self):
+        response = self.client.get(reverse('collection_list'))  
+        self.assertEqual(response.status_code, 200)
+
+    def test_collection_list_view_template(self):
+        response = self.client.get(reverse('collection_list'))
+        self.assertTemplateUsed(response, 'collections/list.html')
+
+    def test_collection_list_view_context(self):
+        response = self.client.get(reverse('collection_list'))
+        self.assertIn('collections', response.context)
+        self.assertEqual(len(response.context['collections']), 1)
+
+
+class RecipeDetailViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.recipe = Recipe.objects.create(
+            author=self.user,
+            title='Recipe 1',
+            servings=4,
+            prepration_time=timedelta(minutes=30),
+            total_time=timedelta(minutes=40),
+            calories=300,
+            instructions='Instructions for Recipe 1.',
+            featured=False,
+            cuisine=Recipe.CuisineType.NORTH_INDIAN,
+            food_type=Recipe.FoodType.VEGETARIAN,
+            difficulty=Recipe.DifficultyLevel.EASY
+        )
+
+    def test_recipe_detail_view_status_code(self):
+        response = self.client.get(reverse('recipe_detail', args=[self.recipe.pk]))  
+        self.assertEqual(response.status_code, 200)
+
+    def test_recipe_detail_view_template(self):
+        response = self.client.get(reverse('recipe_detail', args=[self.recipe.pk]))
+        self.assertTemplateUsed(response, 'recipes/detail.html')
+
+
+class RecipeCollectionDetailViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.collection = RecipeCollection.objects.create(
+            title='Collection 1',
+            user=self.user
+        )
+        self.recipe = Recipe.objects.create(
+            author=self.user,
+            title='Recipe 1',
+            servings=4,
+            prepration_time=timedelta(minutes=30),
+            total_time=timedelta(minutes=40),
+            calories=300,
+            instructions='Instructions for Recipe 1.',
+            featured=False,
+            cuisine=Recipe.CuisineType.NORTH_INDIAN,
+            food_type=Recipe.FoodType.VEGETARIAN,
+            difficulty=Recipe.DifficultyLevel.EASY
+        )
+        self.collection.recipes.add(self.recipe)
+
+    def test_collection_detail_view_status_code(self):
+        response = self.client.get(reverse('collection_detail', args=[self.collection.pk]))  
+        self.assertEqual(response.status_code, 200)
+
+    def test_collection_detail_view_template(self):
+        response = self.client.get(reverse('collection_detail', args=[self.collection.pk]))
+        self.assertTemplateUsed(response, 'collections/detail.html')

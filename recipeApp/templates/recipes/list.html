@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}Recipes{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6">
+
+    <nav class="bg-gray-100 p-4 rounded-lg mb-8">
+        <form method="GET" action="{% url 'recipe_list' %}" class="flex space-x-4 items-center">
+            <input type="text" name="search" placeholder="Search Recipes" value="{{ request.GET.search }}"
+                class="bg-white border border-gray-300 rounded-lg p-2 w-full">
+
+            <select name="user" class="bg-white border border-gray-300 rounded-lg p-2">
+                <option value="">Filter by User</option>
+                {% for u in users %}
+                <option value="{{ u.username }}">{{ u.username }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="cuisine" class="bg-white border border-gray-300 rounded-lg p-2">
+                <option value="">Cuisine Type</option>
+                {% for value, name in cuisine_choices %}
+                <option value="{{ value }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="difficulty" class="bg-white border border-gray-300 rounded-lg p-2">
+                <option value="">Difficulty</option>
+                {% for value, name in difficulty_choices %}
+                <option value="{{ value }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="food_type" class="bg-white border border-gray-300 rounded-lg p-2">
+                <option value="">Food Type</option>
+                {% for value, name in food_type_choices %}
+                <option value="{{ value }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit"
+                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+                Filter
+            </button>
+        </form>
+    </nav>
+
+    <div class="flex justify-end mb-6">
+        <a href="#"
+            class="bg-gradient-to-r from-green-400 to-green-600 text-white px-6 py-2 rounded-full shadow-md hover:from-green-500 hover:to-green-700 transition duration-300">
+            + Create Recipe
+        </a>
+    </div>
+
+    <section>
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Featured Recipes</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for recipe in featured_recipes_page_obj %}
+            <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
+                <img src="{{ recipe.images.first.image.url }}" alt="{{ recipe.title }}"
+                    class="w-full h-48 object-cover rounded-t-lg">
+                <h3 class="text-lg font-bold mt-4">{{ recipe.title }}</h3>
+                <p class="text-gray-600">By {{ recipe.author.username }}</p>
+                <p class="text-gray-600 pb-2">Cuisine: {{ recipe.get_cuisine_display }}</p>
+                <a href="{% url 'recipe_detail' recipe.pk%}"
+                    class="inline-block bg-blue-500 text-white px-2 py-1 rounded-full shadow-md hover:bg-blue-600 transition duration-300">
+                    View Recipe
+                </a>
+            </div>
+            {% empty %}
+            <p>No featured recipes available.</p>
+            {% endfor %}
+        </div>
+
+        <div class="mt-8">
+            <nav class="flex justify-center">
+                <ul class="inline-flex items-center space-x-4">
+                    {% if featured_recipes_page_obj.has_previous %}
+                    <li>
+                        <a href="?featured_page=1&page={{ recipes_page_obj.number }}"
+                            class="px-4 py-2 border rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                            First
+                        </a>
+                    </li>
+                    <li>
+                        <a href="?featured_page={{ featured_recipes_page_obj.previous_page_number }}&page={{ recipes_page_obj.number }}"
+                            class="px-4 py-2 border rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                            Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li>
+                        <span class="px-4 py-2 border rounded-lg bg-blue-500 text-white">{{featured_recipes_page_obj.number }}</span>
+                    </li>
+
+                    {% if featured_recipes_page_obj.has_next %}
+                    <li>
+                        <a href="?featured_page={{ featured_recipes_page_obj.next_page_number }}&page={{ recipes_page_obj.number }}"
+                            class="px-4 py-2 border rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                            Next
+                        </a>
+                    </li>
+                    <li>
+                        <a href="?featured_page={{ featured_recipes_page_obj.paginator.num_pages }}&page={{ recipes_page_obj.number }}"
+                            class="px-4 py-2 border rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                            Last
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </section>
+
+    <section class="mt-10">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">All Recipes</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for recipe in recipes_page_obj %}
+            <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
+                <img src="{{ recipe.images.first.image.url }}" alt="{{ recipe.title }}"
+                    class="w-full h-48 object-cover rounded-t-lg">
+                <h3 class="text-lg font-bold mt-4">{{ recipe.title }}</h3>
+                <p class="text-gray-600">By {{ recipe.author.username }}</p>
+                <p class="text-gray-600 pb-2">Cuisine: {{ recipe.get_cuisine_display }}</p>
+                <a href="{% url 'recipe_detail' recipe.pk%}"
+                    class="inline-block bg-blue-500 text-white px-2 py-1 rounded-full shadow-md hover:bg-blue-600 transition duration-300">
+                    View Recipe
+                </a>
+            </div>
+            {% empty %}
+            <p>No recipes found.</p>
+            {% endfor %}
+        </div>
+ 
+        <div class="mt-8">
+            <nav class="flex justify-center">
+                <ul class="inline-flex items-center space-x-4">
+                    {% if recipes_page_obj.has_previous %}
+                    <li>
+                        <a href="?page=1&featured_page={{ featured_recipes_page_obj.number }}"
+                            class="px-4 py-2 border rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                            First
+                        </a>
+                    </li>
+                    <li>
+                        <a href="?page={{ recipes_page_obj.previous_page_number }}&featured_page={{ featured_recipes_page_obj.number }}"
+                            class="px-4 py-2 border rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                            Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li>
+                        <span class="px-4 py-2 border rounded-lg bg-blue-500 text-white">{{ recipes_page_obj.number}}</span>
+                    </li>
+
+                    {% if recipes_page_obj.has_next %}
+                    <li>
+                        <a href="?page={{ recipes_page_obj.next_page_number }}&featured_page={{ featured_recipes_page_obj.number }}"
+                            class="px-4 py-2 border rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                            Next
+                        </a>
+                    </li>
+                    <li>
+                        <a href="?page={{ recipes_page_obj.paginator.num_pages }}&featured_page={{ featured_recipes_page_obj.number }}"
+                            class="px-4 py-2 border rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                            Last
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </section>
+
+</div>
+{% endblock %}
