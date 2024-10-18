@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen bg-gray-100 pt-6">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-5xl"
+        x-data="formData({{ ingredient_formset.total_form_count }}, {{ image_formset.total_form_count }}, '{{ initial_ingredients|escapejs }}', '{{ initial_images|escapejs }}')">
+
+        <h2 class="text-2xl font-bold mb-4 text-center">
+            {{ recipe.id|yesno:"Edit Recipe,Create Recipe" }}
+        </h2>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-2">Recipe Details</h3>
+                {% include 'includes/form.html' with form=form %}
+            </div>
+
+            <h3 class="text-xl font-semibold mt-6 mb-2">Ingredients</h3>
+            <div id="ingredient-formset">
+                {{ ingredient_formset.management_form }}
+                <template x-for="(ingredient, index) in ingredients" :key="index">
+                    <div class="ingredient-form mb-4">
+                        <input type="hidden" :name="'ingredients-' + index + '-id'" x-model="ingredient.id" />
+
+                        <label :for="'id_ingredients-' + index + '-name'">{{ingredient_formset.empty_form.name.label}}</label>
+                        <input type="text" :name="'ingredients-' + index + '-name'" x-model="ingredient.name"
+                            class="border rounded p-2 w-full" :id="'id_ingredients-' + index + '-name'" required />
+
+                        <label
+                            :for="'id_ingredients-' + index + '-quantity'">{{ingredient_formset.empty_form.quantity.label}}</label>
+                        <input type="number" :name="'ingredients-' + index + '-quantity'" x-model="ingredient.quantity"
+                            class="border rounded p-2 w-full" :id="'id_ingredients-' + index + '-quantity'" required />
+
+                        <label :for="'id_ingredients-' + index + '-unit'">{{ingredient_formset.empty_form.unit.label}}</label>
+                        <select :name="'ingredients-' + index + '-unit'" x-model="ingredient.unit"
+                            class="border rounded p-2 w-full" :id="'id_ingredients-' + index + '-unit'" required>
+                            <option value="">Select a unit</option>
+                            <option value=1>grams</option>
+                            <option value=2>number</option>
+                            <option value=3>tsp</option>
+                            <option value=4>tbsp</option>
+                            <option value=5>litres</option>
+                            <option value=6>cup</option>
+                        </select>
+
+                        <label :for="'id_ingredients-' + index + '-optional'">
+                            <input type="checkbox" :name="'ingredients-' + index + '-optional'"
+                                x-model="ingredient.optional" :id="'id_ingredients-' + index + '-optional'" />
+                            {{ ingredient_formset.empty_form.optional.label }}
+                        </label>
+
+                        <label :for="'id_ingredients-' + index + '-DELETE'">
+                            <input type="checkbox" :name="'ingredients-' + index + '-DELETE'"
+                                x-model="ingredient.delete" hidden/>
+                            
+                        </label>
+
+                        <button type="button" @click="removeIngredient(index)"
+                            class="text-red-500 hover:text-red-700 mt-2">Remove</button>
+                    </div>
+                </template>
+
+                <button type="button" @click="addIngredient()"
+                    class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Add Ingredient</button>
+            </div>
+
+            <h3 class="text-xl font-semibold mt-6 mb-2">Images</h3>
+            <div id="image-formset">
+                {{ image_formset.management_form }}
+                <template x-for="(image, index) in images" :key="index">
+                    <div class="image-form mb-4 p-4 border rounded-lg bg-gray-50">
+                        <template x-if="image.url">
+                            <img :src="image.url" alt="Recipe Image" class="mb-2 w-32 h-32 object-cover" />
+                        </template>
+
+                        <label :for="'id_images-' + index + '-image'">Change Image:</label>
+                        <input type="file" :name="'images-' + index + '-image'" accept="image/*"
+                            class="border rounded p-2" :id="'id_images-' + index + '-image'" />
+
+                        <input type="hidden" :name="'images-' + index + '-id'" x-model="image.id" />
+
+                        <label :for="'id_images-' + index + '-DELETE'">
+                            <input type="checkbox" :name="'images-' + index + '-DELETE'" x-model="image.delete" hidden/>
+                            
+                        </label>
+
+                        <button type="button" @click="removeImage(index)"
+                            class="text-red-500 hover:text-red-700 mt-2">Remove</button>
+                    </div>
+                </template>
+
+                <button type="button" @click="addImage()"
+                    class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Add Image</button>
+            </div>
+
+            <button type="submit" class="mt-6 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full">
+                {{ recipe.id|yesno:"Update Recipe,Create Recipe" }}
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function formData(initialIngredientCount, initialImageCount, initialIngredients, initialImages) {
+        return {
+            ingredients: initialIngredients ? JSON.parse(initialIngredients).map(ingredient => ({
+                id: ingredient.id,
+                name: ingredient.name,
+                quantity: ingredient.quantity,
+                unit: ingredient.unit,
+                optional: ingredient.optional,
+                delete: false
+            })) : Array.from({ length: initialIngredientCount }, () => ({
+                id: '',
+                name: '',
+                quantity: '',
+                unit: '',
+                optional: false,
+                delete: false
+            })),
+            images: initialImages ? JSON.parse(initialImages).map(img => ({
+                id: img.id,
+                url: img.url,
+                delete: false
+            })) : Array.from({ length: initialImageCount }, () => ({
+                id: '',
+                url: '',
+                delete: false
+            })),
+            addIngredient() {
+                const totalFormsInput = document.querySelector('input[name="ingredients-TOTAL_FORMS"]');
+                const currentFormCount = parseInt(totalFormsInput.value);
+                this.ingredients.push({ id: '', name: '', quantity: '', unit: '', optional: false, delete: false });
+                totalFormsInput.value = currentFormCount + 1;
+            },
+            removeIngredient(index) {
+                this.ingredients[index].delete = true;
+                const ingredientDiv = document.querySelectorAll('.ingredient-form')[index];
+                ingredientDiv.style.display = 'none';
+            },
+            addImage() {
+                const totalFormsInput = document.querySelector('input[name="images-TOTAL_FORMS"]');
+                const currentFormCount = parseInt(totalFormsInput.value);
+                this.images.push({ id: '', url: '', delete: false });
+                totalFormsInput.value = currentFormCount + 1;
+            },
+            removeImage(index) {
+                this.images[index].delete = true;
+                const ingredientDiv = document.querySelectorAll('.image-form')[index];
+                ingredientDiv.style.display = 'none';
+            }
+        };
+    }
+</script>
+{% endblock %}

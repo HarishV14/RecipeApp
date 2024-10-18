@@ -1,0 +1,36 @@
+{% extends "base.html" %} <!-- Extend from your base template -->
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="max-w-lg mx-auto mt-10">
+    <h2 class="text-2xl font-bold mb-5">Create Recipe Collection</h2>
+
+    <form method="post" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        {% csrf_token %}
+        <div class="mb-4">
+            <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Collection Title</label>
+            {{ form.title|add_class:"border border-gray-300 rounded p-2 w-full" }} 
+        </div>
+
+        <fieldset class="mb-4">
+            <legend class="block text-gray-700 text-sm font-bold mb-2">Select Recipes</legend>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for recipe in form.recipes %}
+                <div class="flex items-center border border-gray-300 rounded p-3">
+                    <label for="{{ recipe.id_for_label }}" class="flex items-center">
+                        {{ recipe.tag }} 
+                        <div class="ml-2">
+                            <span class="font-semibold">{{ recipe.choice_label }}</span>
+                        </div>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Create Collection
+        </button>
+    </form>
+</div>
+{% endblock %}
