@@ -7,9 +7,18 @@
     <h1 class="text-4xl font-bold mb-4 text-center text-gray-800">{{ collection.title }}</h1>
     <p class="text-gray-600 text-center">Created by: <strong>{{ collection.user.username }}</strong></p>
     <p class="text-gray-600 text-center">Number of Recipes: <strong>{{ collection.recipe_count }}</strong></p>
-
+    {% if request.user == collection.user %}
+    <div class="mt-10 text-center">
+        <a href="{% url 'collection_edit' collection.pk %}"
+            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-200">
+            <i class="fas fa-edit mr-2"></i>
+            Edit Recipe
+        </a>
+    </div>
+    {% endif %}
     <h2 class="text-3xl font-semibold mt-8 text-gray-800 text-center">Recipes</h2>
     <div class="flex justify-center mt-4 space-x-4 ">
+       
         {% for recipe in collection.recipes.all %}
         <div class="bg-gray-100 rounded-lg overflow-hidden shadow ">
             <a href="{% url 'recipe_detail' recipe.pk %}" class="block">

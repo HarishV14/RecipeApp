@@ -1,8 +1,12 @@
+import os
 from django.test import TestCase
 from django.contrib.auth.models import User
 from .models import Recipe, RecipeIngredient, RecipeCollection, RecipeImage
+from .forms import RecipeCollectionForm, RecipeForm, RecipeIngredientForm
 from datetime import timedelta
 from django.urls import reverse
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 
 
 class RecipeModelTest(TestCase):
@@ -283,3 +287,209 @@ class RecipeCollectionDetailViewTests(TestCase):
     def test_collection_detail_view_template(self):
         response = self.client.get(reverse('collection_detail', args=[self.collection.pk]))
         self.assertTemplateUsed(response, 'collections/detail.html')
+
+
+class RecipeCollectionCreateViewTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.login(username='testuser', password='testpass')
+
+    def test_create_collection_valid(self):
+        response = self.client.post(reverse('collection_create'), {
+            'title': 'My Recipe Collection',
+            'recipes': [1, 2], 
+        })
+        self.assertEqual(response.status_code, 200) 
+
+    def test_create_collection_invalid(self):
+        response = self.client.post(reverse('collection_create'), {
+            'title': '', 
+        })
+        self.assertEqual(response.status_code, 200)  
+        
+        
+class RecipeCollectionUpdateViewTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.login(username='testuser', password='testpass')
+        self.collection = RecipeCollection.objects.create(title='Old Title', user=self.user)
+
+    def test_update_collection_valid(self):
+        response = self.client.post(reverse('collection_edit', kwargs={'pk': self.collection.pk}), {
+            'title': 'Old Title',
+            'recipes': [1],  
+        })
+        self.assertEqual(response.status_code, 200)  
+        self.collection.refresh_from_db()
+        self.assertEqual(self.collection.title, 'Old Title')
+
+    def test_update_collection_invalid(self):
+        response = self.client.post(reverse('collection_edit', kwargs={'pk': self.collection.pk}), {
+            'title': '',  
+        })
+        self.assertEqual(response.status_code, 200)  
+
+
+class RecipeCreateViewTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.login(username='testuser', password='testpass')
+
+    def test_create_recipe_valid(self):
+        response = self.client.post(reverse('recipe-create'), {
+            'title': 'New Recipe',
+            'servings': 4,
+            'prepration_time': timedelta(minutes=20),
+            'total_time': timedelta(minutes=20),
+            'calories': 500,
+            'instructions': 'Mix all ingredients.',
+            'cuisine': 1,  
+            'food_type': 1,  
+            'difficulty': 1,  
+            'ingredients-0-name': 'Sugar',
+            'ingredients-0-quantity': 100,
+            'ingredients-0-unit': 1,  
+            'images-0-image': SimpleUploadedFile("test_image.jpg", b"file_content", content_type="image/jpeg"),
+        })
+        self.assertEqual(response.status_code, 302)  
+        self.assertTrue(Recipe.objects.filter(title='New Recipe').exists())
+
+    def test_create_recipe_invalid(self):
+        response = self.client.post(reverse('recipe-create'), {
+            'title': '',  # Invalid title
+        })
+        self.assertEqual(response.status_code, 200)  
+
+
+class RecipeUpdateViewTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.login(username='testuser', password='testpass')
+        self.recipe = Recipe.objects.create(
+            author=self.user,
+            title='Old Recipe',
+            servings=4,
+            prepration_time=timedelta(minutes=20),
+            total_time=timedelta(minutes=20),
+            calories=500,
+            instructions='Mix all ingredients.',
+            cuisine=Recipe.CuisineType.NORTH_INDIAN,
+            food_type=Recipe.FoodType.VEGETARIAN,
+            difficulty=Recipe.DifficultyLevel.EASY
+        )
+
+    def test_update_recipe_valid(self):
+        response = self.client.post(reverse('recipe_edit', kwargs={'pk': self.recipe.pk}), {
+            'title': 'Old Recipe',
+            'servings': 4,
+            'prepration_time': timedelta(minutes=20),
+            'total_time': timedelta(minutes=20),
+            'calories': 500,
+            'instructions': 'Mix all ingredients.',
+            'cuisine': 1,  
+            'food_type': 1,  
+            'difficulty': 1,  
+        })
+        self.assertEqual(response.status_code, 302)  
+        self.recipe.refresh_from_db()
+        self.assertEqual(self.recipe.title, 'Old Recipe')
+
+    def test_update_recipe_invalid(self):
+        response = self.client.post(reverse('recipe_edit', kwargs={'pk': self.recipe.pk}), {
+            'title': '', 
+        })
+        self.assertEqual(response.status_code, 200)  
+
+
+# Form Test
+class RecipeFormTests(TestCase):
+    
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.recipe_data = {
+            'title': 'Test Recipe',
+            'servings': 4,
+            'prepration_time': timedelta(hours=1, minutes=30),
+            'total_time': timedelta(hours=2),
+            'calories': 500,
+            'instructions': "Step 1.\nStep 2.",
+            'cuisine': 1,  
+            'food_type': 1,
+            'difficulty': 1,
+            'featured': True,
+        }
+
+    def test_valid_recipe_form(self):
+        form = RecipeForm(data=self.recipe_data)
+        self.assertTrue(form.is_valid())
+
+    def test_blank_instruction_lines(self):
+        self.recipe_data['instructions'] = "Step 1.\n\n\nStep 2."
+        form = RecipeForm(data=self.recipe_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('instructions', form.errors)
+
+    def test_preparation_time_less_than_total_time(self):
+        self.recipe_data['prepration_time'] = timedelta(hours=2, minutes=30)
+        form = RecipeForm(data=self.recipe_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('prepration_time', form.errors)
+
+    def test_invalid_duration_format(self):
+        self.recipe_data['prepration_time'] = 'Invalid format'
+        form = RecipeForm(data=self.recipe_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('prepration_time', form.errors)
+
+
+class RecipeIngredientFormTests(TestCase):
+
+    def test_valid_ingredient_form(self):
+        form_data = {
+            'name': 'Sugar',
+            'quantity': 100,
+            'unit': 1,  
+            'optional': False
+        }
+        form = RecipeIngredientForm(data=form_data)
+        self.assertTrue(form.is_valid())
+
+
+class RecipeCollectionFormTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.recipe = Recipe.objects.create(
+            title='Test Recipe',
+            servings=4,
+            prepration_time=timedelta(hours=1, minutes=30),
+            total_time=timedelta(hours=2),
+            calories=500,
+            instructions="Step 1.",
+            author=self.user,
+            cuisine=1,
+            food_type=1,
+            difficulty=1,
+            featured=True,
+        )
+
+    def test_valid_collection_form(self):
+        form_data = {
+            'title': 'My Collection',
+            'recipes': [self.recipe.pk],
+        }
+        form = RecipeCollectionForm(data=form_data)
+        self.assertTrue(form.is_valid())
+
+    def test_collection_form_with_no_recipes(self):
+        form_data = {
+            'title': 'My Collection',
+            'recipes': [],
+        }
+        form = RecipeCollectionForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('recipes', form.errors)
