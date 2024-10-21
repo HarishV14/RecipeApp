@@ -206,9 +206,28 @@ class RecipeUpdateView(UpdateView):
     def form_invalid(self, form):
         ingredient_formset = RecipeIngredientFormSet(self.request.POST, instance=self.object, prefix='ingredients')
         image_formset = RecipeImageFormSet(self.request.POST, self.request.FILES, instance=self.object, prefix='images')
-        
+        initial_ingredients = json.dumps([
+            {
+                'id': ingredient.id,
+                'name': ingredient.name,
+                'quantity': ingredient.quantity,
+                'unit': ingredient.unit,
+                'optional': ingredient.optional,
+            } for ingredient in form.instance.ingredients.all()
+        ])
+        initial_images = json.dumps([
+            {
+                'id': image.id,
+                'description': image.description,
+                'url': image.image.url, 
+            } for image in form.instance.images.all()
+        ])
+        recipe = self.object
         return self.render_to_response({
             'form': form,
             'ingredient_formset': ingredient_formset,
             'image_formset': image_formset,
+            'initial_ingredients':initial_ingredients,
+            'initial_images':initial_images,
+            'recipe':recipe
         })
