@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
-from django.views.generic import TemplateView, ListView, DetailView, FormView, UpdateView
+from django.views.generic import TemplateView, ListView, DetailView, FormView, UpdateView, DeleteView
 from .models import Recipe, RecipeCollection
 from django.core.paginator import Paginator
 from .forms import RecipeForm, RecipeImageFormSet, RecipeIngredientFormSet, RecipeCollectionForm
 import json
+from django.urls import reverse_lazy
+from .filters import RecipeFilter, RecipeCollectionFilter
 
 
 class HomePageView(TemplateView):
@@ -16,27 +18,29 @@ class RecipeListView(ListView):
     template_name = 'recipes/list.html'
     context_object_name = 'recipes'
     paginate_by = 3
+    filterset_class = RecipeFilter
 
     def get_queryset(self):
-        return Recipe.objects.filter(featured=False).order_by('-created_at')
+        queryset = Recipe.objects.filter().order_by('-created_at')
+        self.filterset = RecipeFilter(self.request.GET, queryset=queryset)
+        return self.filterset.qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        featured_recipes = Recipe.objects.filter(featured=True).order_by('-created_at')
+        filtered_queryset = self.filterset.qs
+        context['filter'] = self.filterset
+        
+        featured_recipes = filtered_queryset.filter(featured=True)
         featured_paginator = Paginator(featured_recipes, 3)  
         featured_page_number = self.request.GET.get('featured_page')
         
-        normal_recipes = Recipe.objects.filter(featured=False).order_by('-created_at')
+        normal_recipes = filtered_queryset.filter(featured=False)
         normal_paginator = Paginator(normal_recipes, self.paginate_by)
         page_number = self.request.GET.get('page')
         
         context['featured_recipes_page_obj'] = featured_paginator.get_page(featured_page_number)
         context['recipes_page_obj'] = normal_paginator.get_page(page_number)
-        context['users'] = User.objects.all()
-        context['cuisine_choices'] = Recipe.CuisineType.choices
-        context['difficulty_choices'] = Recipe.DifficultyLevel.choices
-        context['food_type_choices'] = Recipe.FoodType.choices
 
         return context
 
@@ -46,13 +50,18 @@ class RecipeCollectionListView(ListView):
     template_name = 'collections/list.html'  
     context_object_name = 'collections'
     paginate_by = 3
+    filterset_class = RecipeCollectionFilter
 
     def get_queryset(self):
-        return RecipeCollection.objects.all().order_by('-created_at')
+        queryset = RecipeCollection.objects.all().order_by('-created_at')
+        self.filterset = RecipeCollectionFilter(self.request.GET, queryset=queryset)
+        return self.filterset.qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['collection_count'] = RecipeCollection.objects.count()  
+        filtered_queryset = self.filterset.qs
+        context['filter'] = self.filterset
+        context['collection_count'] = filtered_queryset.count()   
         return context
 
 
@@ -231,3 +240,23 @@ class RecipeUpdateView(UpdateView):
             'initial_images':initial_images,
             'recipe':recipe
         })
+
+
+class RecipeDeleteView(DeleteView):
+    model = Recipe
+    template_name = 'recipes/recipe_confirm_delete.html'  
+    context_object_name = 'recipe'
+    success_url = reverse_lazy('recipe_list')  
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+
+class RecipeCollectionDeleteView(DeleteView):
+    model = RecipeCollection
+    template_name = 'collections/collection_confirm_delete.html' 
+    context_object_name = 'collection'
+    success_url = reverse_lazy('collection_list')  
+
+    def get_queryset(self):
+        return super().get_queryset()
