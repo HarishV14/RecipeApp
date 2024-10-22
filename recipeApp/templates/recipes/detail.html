@@ -33,7 +33,7 @@
     
         {% if recipe.images.count == 1 %}
         <div class="flex justify-center">
-            <div class="flex-shrink-0 w-64 rounded-lg shadow-lg overflow-hidden">
+            <div class="flex-shrink-0 w-64 rounded-lg shadow-lg overflow-hidden"> <!-- Fixed width for single image -->
                 <img src="{{ recipe.images.first.image.url }}" alt="{{ recipe.images.first.description }}"
                     class="w-full h-64 object-cover transition-transform duration-300 transform hover:scale-105">
                 {% if recipe.images.first.description %}
@@ -61,11 +61,6 @@
             class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-200">
             <i class="fas fa-edit mr-2"></i> 
             Edit Recipe
-        </a>
-        <a href="{% url 'recipe_delete' recipe.pk %}"
-            class="inline-flex items-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition duration-200 ml-4">
-            <i class="fas fa-trash mr-2"></i>
-            Delete Recipe
         </a>
     </div>
     {% endif %}
