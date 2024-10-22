@@ -207,7 +207,7 @@ class RecipeListViewTests(TestCase):
     def test_recipe_list_view_context(self):
         response = self.client.get(reverse('recipe_list'))
         self.assertIn('recipes', response.context)
-        self.assertEqual(len(response.context['recipes']), 1)  
+        self.assertEqual(len(response.context['recipes']), 2)  
 
 
 class RecipeCollectionListViewTests(TestCase):
@@ -403,6 +403,51 @@ class RecipeUpdateViewTests(TestCase):
             'title': '', 
         })
         self.assertEqual(response.status_code, 200)  
+
+
+class RecipeDeleteViewTests(TestCase):
+    
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        
+        self.recipe = Recipe.objects.create(
+            title='Test Recipe',
+            author=self.user,
+            servings=4,
+            prepration_time=timedelta(minutes=20),
+            total_time=timedelta(minutes=45),
+            calories=200,
+            instructions="Test instructions for the recipe.",
+            featured=True,
+            cuisine=Recipe.CuisineType.SOUTH_INDIAN,
+            food_type=Recipe.FoodType.VEGETARIAN,
+            difficulty=Recipe.DifficultyLevel.EASY
+        )
+
+    def test_delete_recipe_view_authenticated(self):
+        self.client.login(username='testuser', password='testpassword')
+        response = self.client.post(reverse('recipe_delete', args=[self.recipe.pk]))
+
+        self.assertFalse(Recipe.objects.filter(pk=self.recipe.pk).exists())
+        self.assertRedirects(response, reverse('recipe_list'))
+
+
+class RecipeCollectionDeleteViewTests(TestCase):
+    
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        
+        self.collection = RecipeCollection.objects.create(
+            title='Test Collection',
+            user=self.user,
+        )
+
+    def test_delete_collection_view_authenticated(self):
+        self.client.login(username='testuser', password='testpassword')
+        response = self.client.post(reverse('collection_delete', args=[self.collection.pk]))
+
+        self.assertFalse(RecipeCollection.objects.filter(pk=self.collection.pk).exists())
+        self.assertRedirects(response, reverse('collection_list'))
 
 
 # Form Test

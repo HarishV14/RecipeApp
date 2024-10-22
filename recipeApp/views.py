@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
-from django.views.generic import TemplateView, ListView, DetailView, FormView, UpdateView
+from django.views.generic import TemplateView, ListView, DetailView, FormView, UpdateView, DeleteView
 from .models import Recipe, RecipeCollection
 from django.core.paginator import Paginator
 from .forms import RecipeForm, RecipeImageFormSet, RecipeIngredientFormSet, RecipeCollectionForm
 import json
+from django.urls import reverse_lazy
 
 
 class HomePageView(TemplateView):
@@ -231,3 +232,23 @@ class RecipeUpdateView(UpdateView):
             'initial_images':initial_images,
             'recipe':recipe
         })
+
+
+class RecipeDeleteView(DeleteView):
+    model = Recipe
+    template_name = 'recipes/recipe_confirm_delete.html'  
+    context_object_name = 'recipe'
+    success_url = reverse_lazy('recipe_list')  
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+
+class RecipeCollectionDeleteView(DeleteView):
+    model = RecipeCollection
+    template_name = 'collections/collection_confirm_delete.html' 
+    context_object_name = 'collection'
+    success_url = reverse_lazy('collection_list')  
+
+    def get_queryset(self):
+        return super().get_queryset()
