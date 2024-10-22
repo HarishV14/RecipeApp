@@ -1,0 +1,83 @@
+/* Add this CSS to your styles */
+.scrollbar-hide {
+    overflow: -moz-scrollbars-none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+}
+
+/* Hide the default checkbox */
+input[type="checkbox"].hidden {
+    display: none;
+}
+
+/* Style the toggle switch */
+label {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Background for the toggle switch */
+label .block {
+    background-color: #e0e0e0; /* Off state color */
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+}
+
+/* Dot for the toggle */
+label .dot {
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    transition: transform 0.1s ease;
+}
+
+/* Change background color when checked */
+input[type="checkbox"]:checked + .block {
+    background-color: #4CAFEB; /* On state color */
+}
+
+/* Move dot when checked */
+/* Hide the default checkbox */
+input[type="checkbox"].hidden {
+    display: none; /* Hide the checkbox */
+}
+
+/* Style the label */
+label {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Background for the toggle switch */
+label .block {
+    background-color: #e0e0e0; /* Off state color */
+    border-radius: 20px; /* Rounded corners */
+    cursor: pointer; /* Pointer on hover */
+    position: relative; /* To position dot within */
+    transition: background-color 0.1s ease; /* Smooth background color transition */
+}
+
+/* Dot for the toggle */
+.dot {
+    position: absolute;
+    top: 1px; /* Positioning the dot */
+    left: 1px; /* Start from the left */
+    transition: transform 0.2s ease; /* Smooth movement */
+}
+
+/* Change background color when checked */
+input[type="checkbox"]:checked + .block {
+    background-color: #4CAFEB; /* On state color */
+}
+
+/* Move dot when checked */
+input[type="checkbox"]:checked + .block + .dot {
+    transform: translateX(100%); /* Move to the right */
+}

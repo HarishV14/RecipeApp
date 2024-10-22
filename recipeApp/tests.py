@@ -6,7 +6,7 @@ from .forms import RecipeCollectionForm, RecipeForm, RecipeIngredientForm
 from datetime import timedelta
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
-
+from .filters import RecipeFilter, RecipeCollectionFilter
 
 
 class RecipeModelTest(TestCase):
@@ -538,3 +538,143 @@ class RecipeCollectionFormTests(TestCase):
         form = RecipeCollectionForm(data=form_data)
         self.assertFalse(form.is_valid())
         self.assertIn('recipes', form.errors)
+
+
+#filter test
+class RecipeFilterTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username='testuser', password='password')
+        cls.recipe1 = Recipe.objects.create(
+            author=cls.user,
+            title='Vegetarian Pasta',
+            cuisine=Recipe.CuisineType.CHINESE,
+            servings=4,
+            prepration_time=timedelta(hours=1, minutes=30),
+            total_time=timedelta(hours=1, minutes=30),
+            calories=300,
+            instructions='Boil water and cook pasta.',
+            featured=False,
+            food_type=Recipe.FoodType.VEGAN,
+            difficulty=Recipe.DifficultyLevel.EASY
+        )
+        cls.recipe2 = Recipe.objects.create(
+            author=cls.user,
+            title='Chicken Curry',
+            cuisine=Recipe.CuisineType.CHINESE,
+            servings=4,
+            prepration_time=timedelta(hours=1, minutes=30),
+            total_time=timedelta(hours=1, minutes=30),
+            calories=500,
+            instructions='Cook chicken with spices.',
+            featured=False,
+            food_type=Recipe.FoodType.VEGETARIAN,
+            difficulty=Recipe.DifficultyLevel.EASY
+        )
+        cls.recipe3 = Recipe.objects.create(
+            author=cls.user,
+            title='Fried Rice',
+            cuisine=Recipe.CuisineType.CHINESE,
+            servings=4,
+            prepration_time=timedelta(hours=1),
+            total_time=timedelta(hours=1, minutes=30),
+            calories=400,
+            instructions='Stir fry rice with vegetables.',
+            featured=False,
+            food_type=Recipe.FoodType.VEGETARIAN,
+            difficulty=Recipe.DifficultyLevel.MEDIUM
+        )
+
+    def test_search_by_title(self):
+        filter_set = RecipeFilter(data={'search': 'Vegetarian'}, queryset=Recipe.objects.all())
+        self.assertEqual(len(filter_set.qs), 1)
+        self.assertEqual(filter_set.qs.first(), self.recipe1)
+
+    def test_search_by_author(self):
+        filter_set = RecipeFilter(data={'search': 'testuser'}, queryset=Recipe.objects.all())
+        self.assertEqual(len(filter_set.qs), 3)
+    
+    def test_search_by_cuisine(self):
+        filter_set = RecipeFilter(data={'search': 'Chinese'}, queryset=Recipe.objects.all())
+        self.assertEqual(len(filter_set.qs), 3)
+
+    def test_filter_by_cuisine(self):
+        filter_set = RecipeFilter(data={'cuisine': Recipe.CuisineType.CHINESE}, queryset=Recipe.objects.all())
+        self.assertEqual(len(filter_set.qs), 3)  
+
+    def test_filter_by_food_type(self):
+        filter_set = RecipeFilter(data={'food_type': Recipe.FoodType.VEGETARIAN}, queryset=Recipe.objects.all())
+        self.assertEqual(len(filter_set.qs), 2)  
+        
+    def test_filter_by_difficulty(self):
+        filter_set = RecipeFilter(data={'difficulty': Recipe.DifficultyLevel.EASY}, queryset=Recipe.objects.all())
+        self.assertEqual(len(filter_set.qs), 2)  
+
+    def test_no_results(self):
+        filter_set = RecipeFilter(data={'search': 'Non-existent'}, queryset=Recipe.objects.all())
+        self.assertEqual(len(filter_set.qs), 0)
+
+    def test_show_my_items(self):
+        filter_set = RecipeFilter(data={'user_filter': True}, queryset=Recipe.objects.all(), user=self.user)
+        self.assertEqual(len(filter_set.qs), 3)  
+
+
+class RecipeCollectionFilterTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username='testuser', password='password')
+        cls.recipe1 = Recipe.objects.create(
+            author=cls.user,
+            title='Vegetarian Pasta',
+            cuisine=Recipe.CuisineType.CHINESE,
+            servings=4,
+            prepration_time=timedelta(hours=2),
+            total_time=timedelta(hours=2),
+            calories=300,
+            instructions='Boil water and cook pasta.',
+            featured=False,
+            food_type=Recipe.FoodType.VEGETARIAN,
+            difficulty=Recipe.DifficultyLevel.EASY
+        )
+        cls.recipe2 = Recipe.objects.create(
+            author=cls.user,
+            title='Chicken Curry',
+            cuisine=Recipe.CuisineType.CHINESE,
+            servings=4,
+            prepration_time=timedelta(hours=2),
+            total_time=timedelta(hours=2),
+            calories=500,
+            instructions='Cook chicken with spices.',
+            featured=False,
+            food_type=Recipe.FoodType.VEGETARIAN,
+            difficulty=Recipe.DifficultyLevel.EASY
+        )
+        cls.collection = RecipeCollection.objects.create(
+            title='My Favorite Recipes',
+            user=cls.user
+        )
+        cls.collection.recipes.add(cls.recipe1)
+        cls.collection.recipes.add(cls.recipe2)
+
+    def test_search_by_collection_title(self):
+        filter_set = RecipeCollectionFilter(data={'search': 'Favorite'}, queryset=RecipeCollection.objects.all())
+        self.assertEqual(len(filter_set.qs), 1)
+        self.assertEqual(filter_set.qs.first(), self.collection)
+
+    def test_search_by_recipe_title(self):
+        filter_set = RecipeCollectionFilter(data={'search': 'Pasta'}, queryset=RecipeCollection.objects.all())
+        self.assertEqual(len(filter_set.qs), 1)
+        self.assertEqual(filter_set.qs.first(), self.collection)
+
+    def test_search_by_user(self):
+        filter_set = RecipeCollectionFilter(data={'search': 'testuser'}, queryset=RecipeCollection.objects.all())
+        self.assertEqual(len(filter_set.qs), 1)
+
+    def test_no_results(self):
+        filter_set = RecipeCollectionFilter(data={'search': 'Non-existent'}, queryset=RecipeCollection.objects.all())
+        self.assertEqual(len(filter_set.qs), 0)
+    
+    def test_show_my_items(self):
+        filter_set = RecipeCollectionFilter(data={'user_filter': True}, queryset=RecipeCollection.objects.all(), user=self.user)
+        self.assertEqual(len(filter_set.qs), 1)
+        self.assertEqual(filter_set.qs.first(), self.collection)
