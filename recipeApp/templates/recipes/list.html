@@ -69,7 +69,7 @@
                     <option value="3" {% if request.GET.food_type == "3" %}selected{% endif %}>Vegan</option>
                 </select>
             </div>
-    
+            {% if user.is_authenticated %}
             <div class="flex items-center col-span-1 md:col-span-2">
                 <label for="user_filter" class="flex items-center cursor-pointer">
                     <input type="checkbox" id="user_filter" name="user_filter" value="true" onchange="this.form.submit()"
@@ -80,7 +80,8 @@
                     <div class="ml-3 text-gray-700 font-medium">My Recipe</div>
                 </label>
             </div>
-    
+            {% endif %}
+
         </form>
     </nav>
 

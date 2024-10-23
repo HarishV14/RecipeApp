@@ -7,6 +7,9 @@ from .forms import RecipeForm, RecipeImageFormSet, RecipeIngredientFormSet, Reci
 import json
 from django.urls import reverse_lazy
 from .filters import RecipeFilter, RecipeCollectionFilter
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.decorators import method_decorator
+from .decorators import recipe_owner_required,collection_owner_required
 
 
 class HomePageView(TemplateView):
@@ -65,19 +68,19 @@ class RecipeCollectionListView(ListView):
         return context
 
 
-class RecipeDetailView(DetailView):
+class RecipeDetailView(LoginRequiredMixin,DetailView):
     model = Recipe
     template_name = 'recipes/detail.html'
     context_object_name = 'recipe'
 
 
-class RecipeCollectionDetailView(DetailView):
+class RecipeCollectionDetailView(LoginRequiredMixin,DetailView):
     model = RecipeCollection
     template_name = 'collections/detail.html'
     context_object_name = 'collection'
  
  
-class RecipeCollectionCreateView(FormView):
+class RecipeCollectionCreateView(LoginRequiredMixin,FormView):
     form_class = RecipeCollectionForm
     template_name = 'collections/collection_form.html'  
 
@@ -92,7 +95,7 @@ class RecipeCollectionCreateView(FormView):
     def form_invalid(self, form):
         return super().form_invalid(form)
     
-
+@method_decorator(collection_owner_required, name='dispatch')
 class RecipeCollectionUpdate(UpdateView):
     model = RecipeCollection  
     form_class = RecipeCollectionForm
@@ -112,7 +115,7 @@ class RecipeCollectionUpdate(UpdateView):
         return super().form_invalid(form)
 
 
-class RecipeCreateView(FormView):
+class RecipeCreateView(LoginRequiredMixin,FormView):
     model = Recipe
     form_class = RecipeForm
     template_name = 'recipes/recipe_form.html'
@@ -160,6 +163,7 @@ class RecipeCreateView(FormView):
         })
             
             
+@method_decorator(recipe_owner_required, name='dispatch')           
 class RecipeUpdateView(UpdateView):
     model = Recipe
     form_class = RecipeForm
@@ -242,6 +246,7 @@ class RecipeUpdateView(UpdateView):
         })
 
 
+@method_decorator(recipe_owner_required, name='dispatch')           
 class RecipeDeleteView(DeleteView):
     model = Recipe
     template_name = 'recipes/recipe_confirm_delete.html'  
@@ -252,6 +257,7 @@ class RecipeDeleteView(DeleteView):
         return super().get_queryset()
 
 
+@method_decorator(collection_owner_required, name='dispatch')
 class RecipeCollectionDeleteView(DeleteView):
     model = RecipeCollection
     template_name = 'collections/collection_confirm_delete.html' 

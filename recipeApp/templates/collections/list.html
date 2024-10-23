@@ -13,6 +13,7 @@
                     <i class="fas fa-search"></i>
                 </button>
             </div>
+            {% if user.is_authenticated %}
             <div class="flex items-center col-span-1 md:col-span-2">
                 <label for="user_filter" class="flex items-center cursor-pointer">
                     <input type="checkbox" id="user_filter" name="user_filter" value="true" onchange="this.form.submit()"
@@ -24,6 +25,7 @@
                     <div class="ml-3 text-gray-700 font-medium">My Collection</div>
                 </label>
             </div>
+            {% endif %}
         </form>
     </nav>
     <div class="flex justify-between items-center mb-6">
