@@ -122,8 +122,12 @@ class RecipeCreateView(LoginRequiredMixin,FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['ingredient_formset'] = RecipeIngredientFormSet(prefix='ingredients')
-        context['image_formset'] = RecipeImageFormSet(prefix='images')
+        if self.request.POST:
+            context['ingredient_formset'] = RecipeIngredientFormSet(self.request.POST, prefix='ingredients')
+            context['image_formset'] = RecipeImageFormSet(self.request.POST, self.request.FILES, prefix='images')
+        else:
+            context['ingredient_formset'] = RecipeIngredientFormSet(prefix='ingredients')
+            context['image_formset'] = RecipeImageFormSet(prefix='images')
         return context
 
     def form_valid(self, form):
@@ -156,10 +160,37 @@ class RecipeCreateView(LoginRequiredMixin,FormView):
     def form_invalid(self, form):
         ingredient_formset = RecipeIngredientFormSet(self.request.POST, prefix='ingredients')
         image_formset = RecipeImageFormSet(self.request.POST, self.request.FILES, prefix='images')
+        
+        initial_ingredients = [
+            {
+                'id': ingredient.cleaned_data.get('id', ''),
+                'name': ingredient.cleaned_data.get('name', ''),
+                'quantity': ingredient.cleaned_data.get('quantity', ''),
+                'unit': ingredient.cleaned_data.get('unit', ''),
+                'optional': ingredient.cleaned_data.get('optional', False)
+            }
+            for ingredient in ingredient_formset.forms if ingredient.is_valid() and not ingredient.cleaned_data.get('DELETE', False)
+        ]
+       
+        initial_images = [
+            {
+                'id': image.cleaned_data.get('id', ''),
+                'description': image.cleaned_data.get('description', ''),
+                'url': ''
+            }
+
+            for image in image_formset.forms if image.is_valid() and not image.cleaned_data.get('DELETE', False)
+        ]
+        
+        ingredient_formset = RecipeIngredientFormSet(self.request.POST, initial=initial_ingredients, prefix='ingredients')
+        image_formset = RecipeImageFormSet(self.request.POST,self.request.FILES, initial=initial_images, prefix='images')
+
         return self.render_to_response({
             'form': form,
             'ingredient_formset': ingredient_formset,
             'image_formset': image_formset,
+            'initial_ingredients': json.dumps(initial_ingredients),
+            'initial_images': json.dumps(initial_images),
         })
             
             
