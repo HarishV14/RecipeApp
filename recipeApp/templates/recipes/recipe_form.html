@@ -20,10 +20,11 @@
             <div id="ingredient-formset">
                 {{ ingredient_formset.management_form }}
                 <template x-for="(ingredient, index) in ingredients" :key="index">
-                    <div class="ingredient-form mb-4">
+                    <div class="ingredient-form mb-4" :class="ingredient.delete ? 'hidden' : ''">
                         <input type="hidden" :name="'ingredients-' + index + '-id'" x-model="ingredient.id" />
 
-                        <label :for="'id_ingredients-' + index + '-name'">{{ingredient_formset.empty_form.name.label}}</label>
+                        <label
+                            :for="'id_ingredients-' + index + '-name'">{{ingredient_formset.empty_form.name.label}}</label>
                         <input type="text" :name="'ingredients-' + index + '-name'" x-model="ingredient.name"
                             class="border rounded p-2 w-full" :id="'id_ingredients-' + index + '-name'" required />
 
@@ -32,16 +33,18 @@
                         <input type="number" :name="'ingredients-' + index + '-quantity'" x-model="ingredient.quantity"
                             class="border rounded p-2 w-full" :id="'id_ingredients-' + index + '-quantity'" required />
 
-                        <label :for="'id_ingredients-' + index + '-unit'">{{ingredient_formset.empty_form.unit.label}}</label>
+                        <label
+                            :for="'id_ingredients-' + index + '-unit'">{{ingredient_formset.empty_form.unit.label}}</label>
                         <select :name="'ingredients-' + index + '-unit'" x-model="ingredient.unit"
-                            class="border rounded p-2 w-full" :id="'id_ingredients-' + index + '-unit'" required>
+                            class="border rounded p-2 w-full" :id="'id_ingredients-' + index + '-unit'"
+                            :required="!ingredient.delete">
                             <option value="">Select a unit</option>
-                            <option value=1>grams</option>
-                            <option value=2>number</option>
-                            <option value=3>tsp</option>
-                            <option value=4>tbsp</option>
-                            <option value=5>litres</option>
-                            <option value=6>cup</option>
+                            <option value="1">grams</option>
+                            <option value="2">number</option>
+                            <option value="3">tsp</option>
+                            <option value="4">tbsp</option>
+                            <option value="5">litres</option>
+                            <option value="6">cup</option>
                         </select>
 
                         <label :for="'id_ingredients-' + index + '-optional'">
@@ -50,11 +53,7 @@
                             {{ ingredient_formset.empty_form.optional.label }}
                         </label>
 
-                        <label :for="'id_ingredients-' + index + '-DELETE'">
-                            <input type="checkbox" :name="'ingredients-' + index + '-DELETE'"
-                                x-model="ingredient.delete" hidden/>
-                            
-                        </label>
+                        <input type="hidden" :name="'ingredients-' + index + '-DELETE'" x-model="ingredient.delete" />
 
                         <button type="button" @click="removeIngredient(index)"
                             class="text-red-500 hover:text-red-700 mt-2">Remove</button>
@@ -69,24 +68,22 @@
             <div id="image-formset">
                 {{ image_formset.management_form }}
                 <template x-for="(image, index) in images" :key="index">
-                    <div class="image-form mb-4 p-4 border rounded-lg bg-gray-50">
-                        <template x-if="image.url">
-                            <img :src="image.url" alt="Recipe Image" class="mb-2 w-32 h-32 object-cover" />
+                    <div class="image-form mb-4 p-4 border rounded-lg bg-gray-50" :class="image.delete ? 'opacity-50' : ''">
+
+                        <template x-if="image.url || image.file">
+                            <img :src="image.file ? URL.createObjectURL(image.file) : image.url" alt="Recipe Image"
+                                class="mb-2 w-32 h-32 object-cover" />
                         </template>
-
+                
                         <label :for="'id_images-' + index + '-image'">Change Image:</label>
-                        <input type="file" :name="'images-' + index + '-image'" accept="image/*"
-                            class="border rounded p-2" :id="'id_images-' + index + '-image'" />
-
+                        <input type="file" :name="'images-' + index + '-image'" accept="image/*" class="border rounded p-2"
+                            :id="'id_images-' + index + '-image'"
+                            @change="(event) => { image.file = event.target.files[0]; image.url = '' }" />
+                
                         <input type="hidden" :name="'images-' + index + '-id'" x-model="image.id" />
-
-                        <label :for="'id_images-' + index + '-DELETE'">
-                            <input type="checkbox" :name="'images-' + index + '-DELETE'" x-model="image.delete" hidden/>
-                            
-                        </label>
-
-                        <button type="button" @click="removeImage(index)"
-                            class="text-red-500 hover:text-red-700 mt-2">Remove</button>
+                        <input type="hidden" :name="'images-' + index + '-DELETE'" x-model="image.delete" />
+                
+                        <button type="button" @click="removeImage(index)" class="text-red-500 hover:text-red-700 mt-2">Remove</button>
                     </div>
                 </template>
 
@@ -122,10 +119,14 @@
             images: initialImages ? JSON.parse(initialImages).map(img => ({
                 id: img.id,
                 url: img.url,
+                file: null,
+                file_pending: false,
                 delete: false
             })) : Array.from({ length: initialImageCount }, () => ({
                 id: '',
                 url: '',
+                file: null,
+                file_pending: false,
                 delete: false
             })),
             addIngredient() {
@@ -135,9 +136,14 @@
                 totalFormsInput.value = currentFormCount + 1;
             },
             removeIngredient(index) {
+                const ingredient = this.ingredients[index];
+                const remainingIngredients = this.ingredients.filter(ing => !ing.delete);
+
+                if (remainingIngredients.length <= 1 && !ingredient.delete) {
+                    alert('At least one ingredient must be included in the recipe.');
+                    return;
+                }
                 this.ingredients[index].delete = true;
-                const ingredientDiv = document.querySelectorAll('.ingredient-form')[index];
-                ingredientDiv.style.display = 'none';
             },
             addImage() {
                 const totalFormsInput = document.querySelector('input[name="images-TOTAL_FORMS"]');
@@ -147,8 +153,14 @@
             },
             removeImage(index) {
                 this.images[index].delete = true;
-                const ingredientDiv = document.querySelectorAll('.image-form')[index];
-                ingredientDiv.style.display = 'none';
+
+                const imageForm = document.querySelector(`#image-formset .image-form:nth-child(${index + 1})`);
+                if (imageForm) {
+                    imageForm.querySelectorAll('input').forEach(input => {
+                        input.required = false;
+                    });
+                }
+
             }
         };
     }
