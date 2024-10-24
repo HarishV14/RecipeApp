@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Recipe App{% endblock %}</title>
+    <title>{% block title %}Recipe Heaven{% endblock %}</title>
     <link href="{% static 'css/base.css' %}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -17,21 +17,42 @@
     <nav class="bg-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <a href="{% url 'home' %}"
-                class="text-lg font-semibold text-gray-800 hover:text-blue-600 transition duration-300">Recipe App</a>
+                class="text-2xl font-extrabold hover:text-blue-600 tracking-wide transition duration-300">
+                <span class="text-blue-600">Recipe</span> Heaven
+            </a>
             <div>
                 <ul class="flex space-x-6">
                     <li><a href="{% url 'recipe_list' %}"
                             class="text-gray-700 hover:text-blue-500 transition duration-300">Recipes</a></li>
-                    <li><a href="{% url  'collection_list' %}"
+                    <li><a href="{% url 'collection_list' %}"
                             class="text-gray-700 hover:text-blue-500 transition duration-300">Collections</a></li>
                     {% if user.is_authenticated %}
-                    <li><a href="#"
-                            class="text-gray-700 hover:text-blue-500 transition duration-300">Logout</a></li>
+                    <li x-data="{ open: false }" class="relative">
+                        <a href="#" @click="open = !open" class="text-gray-700 hover:text-blue-500 transition duration-300">
+                            {{ user.username }}
+                        </a>
+                    
+                        <div x-show="open" @click.away="open = false" class="absolute right-5 top-10 bg-white shadow-md rounded-md mt-2 w-48">
+                            <a href="{% url 'password_change' %}" class="block px-4 py-2 text-gray-700 hover:bg-blue-100">
+                                Change Password
+                            </a>
+                            <form id="logout-form" action="{% url 'logout' %}" method="POST" class="block px-4 py-2">
+                                {% csrf_token %}
+                                <button type="submit" class="w-full text-left text-gray-700 hover:bg-blue-100">
+                                    Logout
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+
+    
                     {% else %}
-                    <li><a href="#"
-                            class="text-gray-700 hover:text-blue-500 transition duration-300">Login</a></li>
-                    <li><a href="#"
-                            class="text-gray-700 hover:text-blue-500 transition duration-300">Signup</a></li>
+                    <li>
+                        <a href="{% url 'login' %}" class="text-gray-700 hover:text-blue-500 transition duration-300">Login</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'signup' %}" class="text-gray-700 hover:text-blue-500 transition duration-300">signup</a>
+                    </li>
                     {% endif %}
                 </ul>
             </div>

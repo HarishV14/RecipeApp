@@ -235,6 +235,7 @@ class RecipeCollectionListViewTests(TestCase):
 class RecipeDetailViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.login(username='testuser', password='testpass')
         self.recipe = Recipe.objects.create(
             author=self.user,
             title='Recipe 1',
@@ -256,11 +257,18 @@ class RecipeDetailViewTests(TestCase):
     def test_recipe_detail_view_template(self):
         response = self.client.get(reverse('recipe_detail', args=[self.recipe.pk]))
         self.assertTemplateUsed(response, 'recipes/detail.html')
+    
+    def test_login_required_for_recipe_detail_view(self):
+        """Test that login is required to access the recipe detail view."""
+        self.client.logout()
+        response = self.client.get(reverse('recipe_detail', args=[self.recipe.pk]))
+        self.assertRedirects(response, f"/account/login/?next=/recipes/{self.recipe.pk}/")
 
 
 class RecipeCollectionDetailViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.login(username='testuser', password='testpass')
         self.collection = RecipeCollection.objects.create(
             title='Collection 1',
             user=self.user
@@ -287,6 +295,12 @@ class RecipeCollectionDetailViewTests(TestCase):
     def test_collection_detail_view_template(self):
         response = self.client.get(reverse('collection_detail', args=[self.collection.pk]))
         self.assertTemplateUsed(response, 'collections/detail.html')
+    
+    def test_login_required_for_recipe_collection_detail_view(self):
+        """Test that login is required to access the recipe collection detail view."""
+        self.client.logout()
+        response = self.client.get(reverse('collection_detail', args=[self.collection.pk]))
+        self.assertRedirects(response, f"/account/login/?next=/collections/{self.collection.pk}/")
 
 
 class RecipeCollectionCreateViewTests(TestCase):
@@ -307,6 +321,12 @@ class RecipeCollectionCreateViewTests(TestCase):
             'title': '', 
         })
         self.assertEqual(response.status_code, 200)  
+        
+    def test_login_required_for_collection_create_view(self):
+        """Test that login is required to access the recipe collection create view."""
+        self.client.logout()  
+        response = self.client.get(reverse('collection_create'))
+        self.assertRedirects(response, "/account/login/?next=/collections/create/")  
         
         
 class RecipeCollectionUpdateViewTests(TestCase):
@@ -330,6 +350,18 @@ class RecipeCollectionUpdateViewTests(TestCase):
             'title': '',  
         })
         self.assertEqual(response.status_code, 200)  
+        
+    def test_collection_owner_required_for_collection_update_view(self):
+        """Test that only the collection owner can access the collection update view."""
+        other_user = User.objects.create_user(username='otheruser', password='otherpass')
+        
+        self.client.login(username='otheruser', password='otherpass')
+        response = self.client.get(reverse('collection_edit', kwargs={'pk': self.collection.pk}))
+        self.assertEqual(response.status_code, 403)  # Forbidden
+
+        self.client.login(username='testuser', password='testpass')
+        response = self.client.get(reverse('collection_edit', kwargs={'pk': self.collection.pk}))
+        self.assertEqual(response.status_code, 200)  # Allowed
 
 
 class RecipeCreateViewTests(TestCase):
@@ -362,6 +394,12 @@ class RecipeCreateViewTests(TestCase):
             'title': '',  # Invalid title
         })
         self.assertEqual(response.status_code, 200)  
+    
+    def test_login_required_for_recipe_create_view(self):
+        """Test that login is required to access the recipe create view."""
+        self.client.logout()  
+        response = self.client.get(reverse('recipe-create'))
+        self.assertRedirects(response, "/account/login/?next=/recipes/create/")
 
 
 class RecipeUpdateViewTests(TestCase):
@@ -403,6 +441,18 @@ class RecipeUpdateViewTests(TestCase):
             'title': '', 
         })
         self.assertEqual(response.status_code, 200)  
+    
+    def test_recipe_owner_required_for_recipe_update_view(self):
+        """Test that only the recipe owner can access the recipe update view."""
+        other_user = User.objects.create_user(username='otheruser', password='otherpass')
+    
+        self.client.login(username='otheruser', password='otherpass')
+        response = self.client.get(reverse('recipe_edit', kwargs={'pk': self.recipe.pk}))
+        self.assertEqual(response.status_code, 403)  # Forbidden
+
+        self.client.login(username='testuser', password='testpass')
+        response = self.client.get(reverse('recipe_edit', kwargs={'pk': self.recipe.pk}))
+        self.assertEqual(response.status_code, 200)  # Allowed
 
 
 class RecipeDeleteViewTests(TestCase):
@@ -430,6 +480,17 @@ class RecipeDeleteViewTests(TestCase):
 
         self.assertFalse(Recipe.objects.filter(pk=self.recipe.pk).exists())
         self.assertRedirects(response, reverse('recipe_list'))
+    
+    def test_recipe_owner_required_for_recipe_delete_view(self):
+        """Test that only the recipe owner can access the recipe delete view."""
+        other_user = User.objects.create_user(username='otheruser', password='otherpass')
+        self.client.login(username='otheruser', password='otherpass')
+        response = self.client.get(reverse('recipe_delete', args=[self.recipe.pk]))
+        self.assertEqual(response.status_code, 403)  # Forbidden
+
+        self.client.login(username='testuser', password='testpassword')
+        response = self.client.get(reverse('recipe_delete', args=[self.recipe.pk]))
+        self.assertEqual(response.status_code, 200)  # Allowed
 
 
 class RecipeCollectionDeleteViewTests(TestCase):
@@ -448,6 +509,20 @@ class RecipeCollectionDeleteViewTests(TestCase):
 
         self.assertFalse(RecipeCollection.objects.filter(pk=self.collection.pk).exists())
         self.assertRedirects(response, reverse('collection_list'))
+    
+    def test_collection_owner_required_for_collection_delete_view(self):
+        """Test that only the collection owner can access the collection delete view."""
+        other_user = User.objects.create_user(username='otheruser', password='otherpass')
+        
+        # Test access by a different user
+        self.client.login(username='otheruser', password='otherpass')
+        response = self.client.get(reverse('collection_delete', args=[self.collection.pk]))
+        self.assertEqual(response.status_code, 403)  # Forbidden
+
+        # Test access by the collection owner
+        self.client.login(username='testuser', password='testpassword')
+        response = self.client.get(reverse('collection_delete', args=[self.collection.pk]))
+        self.assertEqual(response.status_code, 200)  # Allowed
 
 
 # Form Test
