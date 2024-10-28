@@ -8,15 +8,14 @@
     <nav class="bg-gray-100 p-4 rounded-lg mb-8 shadow-lg">
         <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-center">
     
-            <div class="flex items-center">
-                <label for="search" class="mr-2 text-gray-700">Search:</label>
-                {{ filter.form.search}}
+            <div class="flex items-center space-x-2">
+                <input type="text" name="search" id="search" class="border rounded-md px-2 py-1 flex-1" placeholder= 'Search' value="{{ request.GET.search }}">
                 <button type="submit" class="ml-2 bg-blue-500 text-white px-2 py-1 rounded-md hover:bg-blue-600 transition">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
     
-            <div class="flex items-center">
+            <div class="flex items-center lg:pl-2">
                 <label for="sort_by_calories" class="mr-4 text-gray-700">Sort by Calories:</label>
                 <select name="sort_by_calories" id="sort_by_calories" class="border rounded-md p-2"
                     onchange="this.form.submit()">
