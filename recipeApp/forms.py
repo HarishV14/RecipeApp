@@ -12,18 +12,6 @@ class RecipeForm(forms.ModelForm):
             'calories', 'instructions', 'cuisine', 'food_type', 'difficulty','featured'
         )
         
-    def clean_instructions(self):
-        instructions = self.cleaned_data.get('instructions')
-
-        if instructions:
-            lines = instructions.splitlines()
-            
-            for line in lines:
-                if line.strip() == "":
-                    raise forms.ValidationError("Please do not leave any blank lines in the description.")
-        
-        return instructions
-        
     def clean(self):
         cleaned_data = super().clean()
         preparation_time = cleaned_data.get('prepration_time')
