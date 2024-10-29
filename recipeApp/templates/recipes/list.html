@@ -116,6 +116,7 @@
         </div>
 
         <div class="mt-8">
+            {% if featured_recipes_page_obj and featured_recipes_page_obj.object_list %}
             <nav class="flex justify-center">
                 <ul class="inline-flex items-center space-x-2">
                     {% if featured_recipes_page_obj.has_previous %}
@@ -153,6 +154,7 @@
                     {% endif %}
                 </ul>
             </nav>
+            {% endif %}
         </div>
     </section>
 
@@ -181,6 +183,7 @@
         </div>
  
         <div class="mt-8">
+            {% if recipes_page_obj and recipes_page_obj.object_list %}
             <nav class="flex justify-center">
                 <ul class="inline-flex items-center space-x-2">
                     {% if recipes_page_obj.has_previous %}
@@ -218,6 +221,7 @@
                     {% endif %}
                 </ul>
             </nav>
+            {% endif %}
         </div>
     </section>
 
